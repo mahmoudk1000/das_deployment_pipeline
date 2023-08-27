@@ -1,8 +1,7 @@
 provider "kubernetes" {
-    config_path = "~/.kube/config"
     host = data.aws_eks_cluster.app_cluster.endpoint
     token = data.aws_eks_cluster_auth.app_cluster.token
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.app_cluster.certificate_authority.0.data)
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.app_cluster.certificate_authority[0].data)
 }
 
 variable private_subnets_cidr_blocks {
@@ -59,15 +58,15 @@ module "eks" {
     source = "terraform-aws-modules/eks/aws"
     version = "19.3.1"
 
-    cluster_name = "app-cluster-name"
-    cluster_version = "1.17"
+    cluster_name = "app-cluster"
+    cluster_version = "1.21"
 
     vpc_id = module.eks_vpc.vpc_id
     subnet_ids = module.eks_vpc.private_subnets
 
     tags = {
-        enviroment = var.env_type
         app = "app"
+        enviroment = var.env_type
     }
 }
 
@@ -82,7 +81,7 @@ resource "aws_eks_node_group" "app_node-group" {
     }
 
     launch_template {
-        name = "my-node-launch-template"
+        name = aws_launch_template.node_launch.name
         version = "$Latest"
     }
 
@@ -92,6 +91,16 @@ resource "aws_eks_node_group" "app_node-group" {
 
     subnet_ids      = module.eks_vpc.private_subnets.subnet_ids
     node_role_arn   = aws_iam_role.eks_node_group_role.arn
+}
+
+resource "aws_launch_template" "node_launch" {
+    name_prefix             = "eks-node-launch-template"
+    instance_type           = "t2.micro"
+    image_id                = data.aws_ami.latest_amazon_linux.id
+
+    instance_market_options {
+        market_type = "spot"
+    }
 }
 
 resource "aws_iam_role" "eks_node_group_role" {
