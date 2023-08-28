@@ -1,0 +1,24 @@
+---
+- name: Set k8s env var for ansible
+  hosts: your_target_host
+  tasks:
+    - name: Set environment variable
+      set_fact:
+        K8S_AUTH_KUBECONFIG: "../terraform/kubeconfig_app-cluster"
+
+
+- name: Deploy app in new k8s namespace
+  hosts: localhost
+  tasks:
+    - name: Create a k8s namespace
+      k8s:
+        name: dev
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Deploy app
+      k8s:
+        src: ../../kubernetes/app_config.yaml
+        namespace: dev
+        state: present
