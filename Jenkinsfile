@@ -52,7 +52,7 @@ pipeline {
         stage('Provision ec2 Instance using Terraform') {
             steps {
                 script {
-                    dir('infra/terraform') {
+                    dir('terraform') {
                         sh 'terraform init'
                         sh 'terraform apply --auto-approve'
                     }
@@ -66,7 +66,7 @@ pipeline {
                     script {
                         echo "Copy necessary files to Ansbile control node"
                         sshagent(['ansible-server-key']) {
-                            sh "scp -o StrictHostKeyChecking=no infra/ansible/* root@_IP_OF_ANSIBLE_NODE_:/root"
+                            sh "scp -o StrictHostKeyChecking=no ansible/* root@_IP_OF_ANSIBLE_NODE_:/root"
                             withCredentials([sshUserPrivateKey(credetialsId: 'ec2-server-key', keyFileVariable: 'keyfile', userVariable: 'user')]) {
                                 sh 'scp $keyfile root@_IP_OF_ANSIBLE_NODE_:/root/ssh-key.pem'
                             }

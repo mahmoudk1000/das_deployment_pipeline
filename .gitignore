@@ -3,4 +3,4 @@
 /src/App.egg-info/*
 
 # Terraform
-/infra/terraform/.terraform
+terraform/.terraform
