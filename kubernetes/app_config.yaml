@@ -60,3 +60,22 @@ spec:
     protocol: TCP
     port: 5000
     targetPort: 5000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitoring_app
+  labels:
+    app: app
+    release: monitoring
+spec:
+  endpoints:
+  - path: /metrics
+    port: service
+    targetPort: 5000
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app: app
