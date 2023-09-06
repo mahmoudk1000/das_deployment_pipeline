@@ -1,0 +1,32 @@
+# https://docs.openshift.com/container-platform/4.13/rest_api/monitoring_apis/prometheus-monitoring-coreos-com-v1.html
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gen_rules
+  namespace: monitoring
+  labels:
+    app: kube-prometheus-stack
+    release: monitoring
+spec:
+  groups:
+    - name: gen.rules
+      rules:
+        - alert: HostHighCpuLoad
+          expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+          for: 2m
+          labels:
+            severity: warning
+            namespace: monitoring
+          annotations:
+            summary: "Host has high CPU load"
+            description: "CPU load on Host is over 50%\n value = {{ $value }}\n Instance = {{ $labels.instance }}"
+        
+        - alert: KubernetesPodCrashLooping
+          expr: kube_pod_container_status_restarts_total > 5
+          for: 0m
+          labels:
+            severity: critical
+            namespace: monitoring
+          annotations:
+            summary: "Kubernetes pod  is crash looping"
+            description: "Pod {{ $labels.pod }} is crash looping for {{ $value }} times"

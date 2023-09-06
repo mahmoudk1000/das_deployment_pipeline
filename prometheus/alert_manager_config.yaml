@@ -1,0 +1,28 @@
+# https://docs.openshift.com/container-platform/4.13/rest_api/monitoring_apis/alertmanagerconfig-monitoring-coreos-com-v1beta1.html
+apiVersion: monitoring.coreos.com/v1beta1
+kind: AlertmanagerConfig
+metadata:
+  name: alert_config
+  namespace: monitoring
+spec:
+  route:
+    receiver: 'mail'
+    repeatInterval: 20m
+    routes:
+      - matchers:
+        - name: alertname
+          value: HostHighCpuLoad
+      - matchers:
+        - name: alertname
+          value: KubernetesPodCrashLooping
+  receivers:
+    - name: 'mail'
+      emailConfigs:
+        - to: 'mail@example.com'
+          from: 'mail@example.com'
+          smartHost: 'smtp.gmail.com:587'
+          authUsername: 'mail@example.com'
+          authIdentity: 'mail@example.com'
+          authPassword:
+            name: mail_auth
+            key: password
