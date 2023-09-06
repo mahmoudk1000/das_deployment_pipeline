@@ -12,6 +12,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "mahmoudk1000/app:v1.0"
+        ANSIBLE_SERVER = ""
     }
 
     stages {
@@ -66,9 +67,9 @@ pipeline {
                     script {
                         echo "Copy necessary files to Ansbile control node"
                         sshagent(['ansible-server-key']) {
-                            sh "scp -o StrictHostKeyChecking=no ansible/* root@_IP_OF_ANSIBLE_NODE_:/root"
+                            sh "scp -o StrictHostKeyChecking=no ansible/* root@${ANSIBLE_SERVER}:/root"
                             withCredentials([sshUserPrivateKey(credetialsId: 'ec2-server-key', keyFileVariable: 'keyfile', userVariable: 'user')]) {
-                                sh 'scp $keyfile root@_IP_OF_ANSIBLE_NODE_:/root/ssh-key.pem'
+                                sh 'scp $keyfile root@$ANSIBLE_SERVER:/root/ssh-key.pem'
                             }
                         }
                     }
@@ -78,12 +79,13 @@ pipeline {
                         echo "Run Ansbile play-book"
                         def remote = [:]
                         remote.name = "ansible-server"
-                        remote.host = "_IP_OF_ANSIBLE_NODE_"
+                        remote.host = env.ANSIBLE_SERVER
                         remote.allowAnyHosts = true
                         
                         withCredentials([sshUserPrivateKey(credetialsId: 'ansible-server-key', keyFileVariable: 'keyfile', userVariable: 'user')]) {
                             remote.user = user
                             remote.identityFile = keyfile
+                            sshScript remote: remote, script: "./ansible/prepare_ansible_server.sh"
                             sshCommand remote: remote, command: "ansible-playbook deploy_app.yaml"
                         }
                     }
